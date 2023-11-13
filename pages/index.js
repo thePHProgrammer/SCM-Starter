@@ -1,5 +1,5 @@
-import {useState, useEffect} from "react";
-import {ethers} from "ethers";
+import { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import atm_abi from "../artifacts/contracts/Assessment.sol/Assessment.json";
 
 export default function HomePage() {
@@ -7,6 +7,7 @@ export default function HomePage() {
   const [account, setAccount] = useState(undefined);
   const [atm, setATM] = useState(undefined);
   const [balance, setBalance] = useState(undefined);
+  const [burnAmount, setBurnAmount] = useState("");
 
   const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
   const atmABI = atm_abi.abi;
@@ -41,7 +42,6 @@ export default function HomePage() {
     const accounts = await ethWallet.request({ method: 'eth_requestAccounts' });
     handleAccount(accounts);
     
-    // once wallet is set we can get a reference to our deployed contract
     getATMContract();
   };
 
@@ -75,13 +75,19 @@ export default function HomePage() {
     }
   }
 
+  const burn = async(amount) => {
+    if (atm) {
+      let tx = await atm.burn(amount);
+      await tx.wait()
+      getBalance();
+    }
+  }
+
   const initUser = () => {
-    // Check to see if user has Metamask
     if (!ethWallet) {
       return <p>Please install Metamask in order to use this ATM.</p>
     }
 
-    // Check to see if user is connected. If not, connect to their account
     if (!account) {
       return <button onClick={connectAccount}>Please connect your Metamask wallet</button>
     }
@@ -96,6 +102,18 @@ export default function HomePage() {
         <p>Your Balance: {balance}</p>
         <button onClick={deposit}>Deposit 1 ETH</button>
         <button onClick={withdraw}>Withdraw 1 ETH</button>
+        
+        <div>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Amount to burn"
+            value={burnAmount}
+            onChange={(e) => setBurnAmount(e.target.value)}
+          />
+          <button onClick={() => burn(burnAmount)}>Burn</button>
+        </div>
       </div>
     )
   }
